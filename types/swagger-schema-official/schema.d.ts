@@ -77,7 +77,93 @@ export interface XML extends Extendable {
  *
  * @see https://tools.ietf.org/html/draft-bhutton-json-schema-00
  * @see https://tools.ietf.org/html/draft-bhutton-json-schema-validation-00
- *
+ */
+export interface BaseSchema {
+    $schema?: string;
+    $id?: string;
+    title?: string;
+    /**
+     * A verbose explanation of the operation behavior. CommonMark syntax MAY be
+     * used for rich text representation.
+     *
+     * @see https://spec.commonmark.org/
+     */
+    description?: string;
+    /**
+     * There are no restrictions placed on the value of this keyword.  When
+     * multiple occurrences of this keyword are applicable to a single sub-
+     * instance, implementations SHOULD remove duplicates.
+     *
+     * This keyword can be used to supply a default JSON value associated with a
+     * particular schema.  It is RECOMMENDED that a default value be valid
+     * against the associated schema.
+     */
+    default?: any;
+    /**
+     * The value of this keyword MUST be a boolean.  When multiple occurrences
+     * of this keyword are applicable to a single sub-instance, applications
+     * SHOULD consider the instance location to be deprecated if any occurrence
+     * specifies a true value.
+     *
+     * If "deprecated" has a value of boolean true, it indicates that
+     * applications SHOULD refrain from usage of the declared property.  It MAY
+     * mean the property is going to be removed in the future.
+     *
+     * A root schema containing "deprecated" with a value of true indicates that
+     * the entire resource being described MAY be removed in the future.
+     *
+     * The "deprecated" keyword applies to each instance location to which the
+     * schema object containing the keyword successfully applies.  This can
+     * result in scenarios where every array item or object property is
+     * deprecated even though the containing array or object is not.
+     *
+     * Omitting this keyword has the same behavior as a value of false.
+     */
+    deprecated?: boolean;
+    /**
+     * `readOnly` properties are included in responses but not in requests.
+     *
+     * If a `readOnly` or `writeOnly` property is included in the required list,
+     * required affects just the relevant scope – responses only or requests
+     * only. That is, read-only required properties apply to responses only, and
+     * write-only required properties – to requests only.
+     */
+    readOnly?: boolean;
+    /**
+     * `writeOnly` properties may be sent in requests but not in responses.
+     *
+     * If a `readOnly` or `writeOnly` property is included in the required list,
+     * required affects just the relevant scope – responses only or requests
+     * only. That is, read-only required properties apply to responses only, and
+     * write-only required properties – to requests only.
+     */
+    writeOnly?: boolean;
+    /**
+     * The value of this keyword MUST be an array.  There are no restrictions
+     * placed on the values within the array.  When multiple occurrences of this
+     * keyword are applicable to a single sub-instance, implementations MUST
+     * provide a flat array of all values rather than an array of arrays.
+     *
+     * This keyword can be used to provide sample JSON values associated with a
+     * particular schema, for the purpose of illustrating usage.  It is
+     * RECOMMENDED that these values be valid against the associated schema.
+     *
+     * Implementations MAY use the value(s) of "default", if present, as an
+     * additional example.  If "examples" is absent, "default" MAY still be used
+     * in this manner.
+     */
+    examples?: any[];
+    /**
+     * In addition to the JSON Schema properties comprising the OAS dialect, the
+     * Schema Object supports keywords from any other vocabularies, or entirely
+     * arbitrary properties.
+     *
+     * @see https://spec.openapis.org/oas/v3.1.0#properties
+     */
+    [any: string]: any;
+}
+
+/**
  * Unless stated otherwise, the property definitions follow those of JSON Schema
  * and do not add any additional semantics. Where JSON Schema indicates that
  * behavior is defined by the application (e.g. for annotations), OAS also
@@ -86,7 +172,7 @@ export interface XML extends Extendable {
  *
  * @see https://spec.openapis.org/oas/v3.1.0#schema-object
  */
-export interface BaseSchema extends Extendable {
+export interface BaseSchema {
     /**
      * This MAY be used only on properties schemas. It has no effect on root
      * schemas. Adds additional metadata to describe the XML representation of
@@ -120,19 +206,19 @@ interface BaseComposition extends BaseSchema {
 }
 
 export interface OneOfSchema extends BaseComposition {
-    oneOf: Array<Schema | Reference>;
+    oneOf: Array<Reference | Schema>;
 }
 
 export interface AnyOfSchema extends BaseComposition {
-    anyOf: Array<Schema | Reference>;
+    anyOf: Array<Reference | Schema>;
 }
 
 export interface AllOfSchema extends BaseComposition {
-    allOf: Array<Schema | Reference>;
+    allOf: Array<Reference | Schema>;
 }
 
 export interface NotSchema extends BaseSchema {
-    not: Schema | Reference;
+    not: Reference | Schema;
 }
 
 export type CompositionSchema = OneOfSchema | AnyOfSchema | AllOfSchema | NotSchema;
@@ -143,7 +229,7 @@ export type CompositionSchema = OneOfSchema | AnyOfSchema | AllOfSchema | NotSch
 export type SchemaType = 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'object';
 
 export interface TypedSchema extends BaseSchema {
-    type: SchemaType;
+    type?: SchemaType;
     /**
      * OpenAPI 3.0 does not have an explicit `null` type as in JSON Schema, but
      * you can use `nullable: true` to specify that the value may be `null`.
@@ -153,24 +239,38 @@ export interface TypedSchema extends BaseSchema {
      * but some tools may choose to map an optional property to the null value.
      */
     nullable?: boolean;
+}
+
+/**
+ * @see https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.2
+ * @see https://swagger.io/docs/specification/data-models/data-types/#numbers
+ */
+interface BaseNumber extends TypedSchema {
     /**
-     * `readOnly` properties are included in responses but not in requests.
-     *
-     * If a `readOnly` or `writeOnly` property is included in the required list,
-     * required affects just the relevant scope – responses only or requests
-     * only. That is, read-only required properties apply to responses only, and
-     * write-only required properties – to requests only.
+     * The minimum valid value is greater than or exactly equal to the number.
      */
-    readOnly?: boolean;
+    minimum?: number;
     /**
-     * `writeOnly` properties may be sent in requests but not in responses.
-     *
-     * If a `readOnly` or `writeOnly` property is included in the required list,
-     * required affects just the relevant scope – responses only or requests
-     * only. That is, read-only required properties apply to responses only, and
-     * write-only required properties – to requests only.
+     * The maximum valid value is less than or exactly equal to the number.
      */
-    writeOnly?: boolean;
+    maximum?: number;
+    /**
+     * Specifies that a maximum value is valid, exclusive. Value is valid only
+     * if it strictly less than (not equal to) the maximum.
+     * @default false
+     */
+    exclusiveMaximum?: boolean;
+    /**
+     * Specifies that a minimum value is valid, exclusive. Value is valid only
+     * if it strictly greater than (not equal to) the minimum.
+     * @default false
+     */
+    exclusiveMinimum?: boolean;
+    /**
+     * Specifies that the number must be a multiple of the given value. Value is
+     * valid only if division by this keyword's value results in an integer.
+     */
+    multipleOf?: number;
 }
 
 /**
@@ -181,35 +281,13 @@ export type SchemaNumberFormat = 'float' | 'double';
 /**
  * @see https://swagger.io/docs/specification/data-models/data-types/#number
  */
-export interface NumberSchema extends TypedSchema {
+export interface NumberSchema extends BaseNumber {
     type: 'number';
     /**
      * An optional format keyword serves as a hint for the tools to use a
      * specific numeric type:
      */
     format?: SchemaNumberFormat;
-    /**
-     * The minimum valid value for the number.
-     */
-    minimum?: number;
-    /**
-     * The maximum valid value for the number.
-     */
-    maximum?: number;
-    /**
-     * Specifies that a maximum value is valid, exclusive.
-     * @default false
-     */
-    exclusiveMaximum?: boolean;
-    /**
-     * Specifies that a minimum value is valid, exclusive.
-     * @default false
-     */
-    exclusiveMinimum?: boolean;
-    /**
-     * Specifies that the number must be a multiple of the given value.
-     */
-    multipleOf?: number;
 }
 
 /**
@@ -220,35 +298,13 @@ export type SchemaIntegerFormat = 'int32' | 'int64';
 /**
  * @see https://swagger.io/docs/specification/data-models/data-types/#number
  */
-export interface IntegerSchema extends TypedSchema {
+export interface IntegerSchema extends BaseNumber {
     type: 'integer';
     /**
      * An optional format keyword serves as a hint for the tools to use a
      * specific numeric type:
      */
     format?: SchemaIntegerFormat;
-    /**
-     * The minimum valid value for the number.
-     */
-    minimum?: number;
-    /**
-     * The maximum valid value for the number.
-     */
-    maximum?: number;
-    /**
-     * Specifies that a maximum value is valid, exclusive.
-     * @default false
-     */
-    exclusiveMaximum?: boolean;
-    /**
-     * Specifies that a minimum value is valid, exclusive.
-     * @default false
-     */
-    exclusiveMinimum?: boolean;
-    /**
-     * Specifies that the number must be a multiple of the given value.
-     */
-    multipleOf?: number;
 }
 
 /**
@@ -277,6 +333,7 @@ export interface IntegerSchema extends TypedSchema {
 export type SchemaStringFormat = 'date' | 'date-time' | 'password' | 'byte' | 'binary';
 
 /**
+ * @see https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.3
  * @see https://swagger.io/docs/specification/data-models/data-types/#string
  */
 export interface StringSchema extends TypedSchema {
@@ -289,12 +346,29 @@ export interface StringSchema extends TypedSchema {
     /**
      * The pattern keyword lets you define a regular expression template for the
      * string value. Only the values that match this template will be accepted.
+     *
+     * The value of this keyword MUST be a string.  This string SHOULD be a
+     * valid regular expression, according to the ECMA-262 regular expression
+     * dialect.
+     *
      * The regular expression syntax used is from JavaScript (more specifically,
-     * ECMA 262). Regular expressions are case-sensitive, that is, [a-z] and
-     * [A-Z] are different expressions.
+     * ECMA 262). Regular expressions are case-sensitive, that is, `[a-z]` and
+     * `[A-Z]` are different expressions.
      */
     pattern?: string;
+    /**
+     * The value of this keyword MUST be a non-negative integer.
+     *
+     * A string instance is valid against this keyword if its length is greater
+     * than, or equal to, the value of this keyword.
+     */
     minLength?: number;
+    /**
+     * The value of this keyword MUST be a non-negative integer.
+     *
+     * A string instance is valid against this keyword if its length is less
+     * than, or equal to, the value of this keyword.
+     */
     maxLength?: number;
     /**
      * @see https://swagger.io/docs/specification/data-models/enums/
@@ -310,6 +384,7 @@ export interface BooleanSchema extends TypedSchema {
 }
 
 /**
+ * @see https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.4
  * @see https://swagger.io/docs/specification/data-models/data-types/#array
  */
 export interface ArraySchema extends TypedSchema {
@@ -321,26 +396,80 @@ export interface ArraySchema extends TypedSchema {
      * The `items` keyword can define an array of schemas or a single schema.
      * What the array is composed of is specified by the `type` keyword.
      */
-    items: CompositionSchema | NormalSchema[];
+    items: Schema | Schema[];
     /**
      * The `maxItems` keyword specifies the maximum number of items that can be
      * contained in the array.
+     *
+     * The value of this keyword MUST be a non-negative integer.
+     *
+     * An array instance is valid against "maxItems" if its size is less than,
+     * or equal to, the value of this keyword.
      */
     maxItems?: number;
     /**
      * The `minItems` keyword specifies the minimum number of items that can be
      * contained in the array. Without `minItems`, an empty array is considered
      * valid.
+     *
+     * The value of this keyword MUST be a non-negative integer.
+     *
+     * An array instance is valid against "minItems" if its size is greater
+     * than, or equal to, the value of this keyword.
+     *
+     * Omitting this keyword has the same behavior as a value of 0.
      */
     minItems?: number;
     /**
      * The `uniqueItems` keyword specifies that all items in the array MUST be
-     * unique. The keyword value MUST be a boolean. When not present, the
-     * default value is `false`.
+     * unique.
+     *
+     * If this keyword has boolean value false, the instance validates
+     * successfully.  If it has boolean value true, the instance validates
+     * successfully if all of its elements are unique.
+     *
+     * Omitting this keyword has the same behavior as a value of false.
      *
      * @default false
      */
     uniqueItems?: boolean;
+    /**
+     * The value of this keyword MUST be a non-negative integer.
+     *
+     * If "contains" is not present within the same schema object, then this
+     * keyword has no effect.
+     *
+     * An instance array is valid against "maxContains" in two ways, depending
+     * on the form of the annotation result of an adjacent "contains" keyword.
+     * The first way is if the annotation result is an array and the length of
+     * that array is less than or equal to the "maxContains" value.  The second
+     * way is if the annotation result is a boolean "true" and the instance
+     * array length is less than or equal to the "maxContains" value.
+     *
+     * @see https://github.com/swagger-api/swagger-core/wiki/Swagger-2.X---OpenAPI-3.1
+     */
+    maxContains?: number;
+    /**
+     * The value of this keyword MUST be a non-negative integer.
+     *
+     * If "contains" is not present within the same schema object, then this
+     * keyword has no effect.
+     *
+     * An instance array is valid against "minContains" in two ways, depending
+     * on the form of the annotation result of an adjacent "contains"
+     * [json-schema] keyword.  The first way is if the annotation result is an
+     * array and the length of that array is greater than or equal to the
+     * "minContains" value.  The second way is if the annotation result is a
+     * boolean "true" and the instance array length is greater than or equal to
+     * the "minContains" value.
+     *
+     * A value of 0 is allowed, but is only useful for setting a range of
+     * occurrences from 0 to the value of "maxContains".  A value of 0 with no
+     * "maxContains" causes "contains" to always pass validation.
+     *
+     * Omitting this keyword has the same behavior as a value of 1.
+     */
+    minContains?: number;
 }
 
 /**
@@ -353,6 +482,16 @@ export interface ObjectSchema extends TypedSchema {
      * The `required` keyword specifies an array of property names that must be
      * present in the object. An empty list `required: []` is not valid. If all
      * properties are optional, do not specify the required keyword.
+     *
+     * The value of this keyword MUST be an array.  Elements of this array, if
+     * any, MUST be strings, and MUST be unique.
+     *
+     * An object instance is valid against this keyword if every item in the
+     * array is the name of a property in the instance.
+     *
+     * Omitting this keyword has the same behavior as an empty array.
+     *
+     * @default []
      */
     required?: string[];
 }
@@ -360,11 +499,44 @@ export interface ObjectSchema extends TypedSchema {
 /**
  * @see https://swagger.io/docs/specification/data-models/data-types/#free-form
  */
-export interface FreeFormObjectSchema extends TypedSchema {
-    type: 'object';
-    additionalProperties?: true | Schema;
+export interface FreeFormObjectSchema extends ObjectSchema {
+    additionalProperties?: boolean | Schema;
+    /**
+     * The value of this keyword MUST be a non-negative integer.
+     *
+     * An object instance is valid against "minProperties" if its number of
+     * properties is greater than, or equal to, the value of this keyword.
+     *
+     * Omitting this keyword has the same behavior as a value of 0.
+     *
+     * @default 0
+     */
     minProperties?: number;
+    /**
+     * The value of this keyword MUST be a non-negative integer.
+     *
+     * An object instance is valid against "maxProperties" if its number of
+     * properties is less than, or equal to, the value of this keyword.
+     */
     maxProperties?: number;
+    /**
+     * The value of this keyword MUST be an object.  Properties in this object,
+     * if any, MUST be arrays.  Elements in each array, if any, MUST be strings,
+     * and MUST be unique.
+     *
+     * This keyword specifies properties that are required if a specific other
+     * property is present.  Their requirement is dependent on the presence of
+     * the other property.
+     *
+     * Validation succeeds if, for each name that appears in both the instance
+     * and as a name within this keyword's value, every item in the
+     * corresponding array is also the name of a property in the instance.
+     *
+     * Omitting this keyword has the same behavior as an empty object.
+     *
+     * @default {}
+     */
+    dependentRequired?: Record<string, string[]>;
 }
 
 export type NormalSchema =
@@ -374,11 +546,17 @@ export type NormalSchema =
     | BooleanSchema
     | ArraySchema
     | ObjectSchema
-    | FreeFormObjectSchema
-    | Reference;
+    | FreeFormObjectSchema;
 
 /**
- * @see https://spec.openapis.org/oas/v3.1.0#parameter-object
+ * @see https://spec.openapis.org/oas/v3.1.0#schema-object
+ * @see https://datatracker.ietf.org/doc/html/rfc8259
+ * @see https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-00
+ * @see https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00
  * @see https://swagger.io/docs/specification/data-models/data-types
+ *
+ * For Supported JSON Schema features, see:
+ *
+ * @see https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.4.4
  */
-export type Schema = CompositionSchema | NormalSchema;
+export type Schema = CompositionSchema | Reference | NormalSchema | TypedSchema;
