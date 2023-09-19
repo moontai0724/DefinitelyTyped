@@ -16,8 +16,7 @@
         "noEmit": true,
         "forceConsistentCasingInFileNames": true
     },
-    "files": [
-        "index.d.ts",
-        "swagger-schema-official-tests.ts"
-    ]
+    "include": [
+        "*.ts"
+    ],
 }
