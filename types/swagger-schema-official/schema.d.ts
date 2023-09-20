@@ -163,15 +163,8 @@ export interface BaseSchema {
     [any: string]: any;
 }
 
-/**
- * Unless stated otherwise, the property definitions follow those of JSON Schema
- * and do not add any additional semantics. Where JSON Schema indicates that
- * behavior is defined by the application (e.g. for annotations), OAS also
- * defers the definition of semantics to the application consuming the OpenAPI
- * document.
- *
- * @see https://spec.openapis.org/oas/v3.1.0#schema-object
- */
+// The following types are not part of the JSON Schema Validation specification,
+// but are supported by the OpenAPI Specification.
 export interface BaseSchema {
     /**
      * This MAY be used only on properties schemas. It has no effect on root
@@ -229,7 +222,37 @@ export type CompositionSchema = OneOfSchema | AnyOfSchema | AllOfSchema | NotSch
 export type SchemaType = 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'object';
 
 export interface TypedSchema extends BaseSchema {
-    type?: SchemaType;
+    type?: SchemaType | SchemaType[];
+    /**
+     * The value of this keyword MUST be an array. This array SHOULD have at
+     * least one element. Elements in the array SHOULD be unique.
+     *
+     * An instance validates successfully against this keyword if its value is
+     * equal to one of the elements in this keyword's array value.
+     *
+     * Elements in the array might be of any type, including null.
+     *
+     * @see https://json-schema.org/draft/2020-12/json-schema-validation.html#section-6.1.2
+     * @see https://swagger.io/docs/specification/data-models/enums/
+     */
+    enum?: string[];
+    /**
+     * The value of this keyword MAY be of any type, including null.
+     *
+     * Use of this keyword is functionally equivalent to an "enum" (Section
+     * 6.1.2) with a single value.
+     *
+     * An instance validates successfully against this keyword if its value is
+     * equal to the value of the keyword.
+     *
+     * @see https://json-schema.org/draft/2020-12/json-schema-validation.html#section-6.1.3
+     */
+    const?: string;
+}
+
+// The following types are not part of the JSON Schema Validation specification,
+// but are supported by the OpenAPI Specification.
+export interface TypedSchema {
     /**
      * OpenAPI 3.0 does not have an explicit `null` type as in JSON Schema, but
      * you can use `nullable: true` to specify that the value may be `null`.
@@ -247,30 +270,78 @@ export interface TypedSchema extends BaseSchema {
  */
 interface BaseNumber extends TypedSchema {
     /**
-     * The minimum valid value is greater than or exactly equal to the number.
+     * The value of "minimum" MUST be a number, representing an inclusive lower
+     * limit for a numeric instance.
+     *
+     * If the instance is a number, then this keyword validates only if the
+     * instance is greater than or exactly equal to "minimum".
      */
     minimum?: number;
     /**
-     * The maximum valid value is less than or exactly equal to the number.
+     * The value of "maximum" MUST be a number, representing an inclusive upper
+     * limit for a numeric instance.
+     *
+     * If the instance is a number, then this keyword validates only if the
+     * instance is less than or exactly equal to "maximum".
      */
     maximum?: number;
     /**
-     * Specifies that a maximum value is valid, exclusive. Value is valid only
-     * if it strictly less than (not equal to) the maximum.
+     * The value of "multipleOf" MUST be a number, strictly greater than 0.
+     *
+     * A numeric instance is valid only if division by this keyword's value
+     * results in an integer.
+     */
+    multipleOf?: number;
+}
+
+/**
+ * @version 3.0
+ */
+interface BaseNumberV30 {
+    /**
+     * Specifies that a maximum value is valid, exclusive.
+     *
+     * Value is valid only if it strictly less than (not equal to) the maximum.
+     *
      * @default false
+     * @deprecated 3.1
      */
     exclusiveMaximum?: boolean;
     /**
-     * Specifies that a minimum value is valid, exclusive. Value is valid only
-     * if it strictly greater than (not equal to) the minimum.
+     * Specifies that a minimum value is valid, exclusive.
+     *
+     * Value is valid only if it strictly greater than (not equal to) the
+     * minimum.
+     *
      * @default false
      */
     exclusiveMinimum?: boolean;
+}
+
+/**
+ * @version 3.1
+ */
+interface BaseNumberV31 {
     /**
-     * Specifies that the number must be a multiple of the given value. Value is
-     * valid only if division by this keyword's value results in an integer.
+     * The value of "exclusiveMaximum" MUST be a number, representing an
+     * exclusive upper limit for a numeric instance.
+     *
+     * If the instance is a number, then the instance is valid only if it has a
+     * value strictly less than (not equal to) "exclusiveMaximum".
+     *
+     * @since 3.1
      */
-    multipleOf?: number;
+    exclusiveMaximum?: number;
+    /**
+     * The value of "exclusiveMinimum" MUST be a number, representing an
+     * exclusive lower limit for a numeric instance.
+     *
+     * If the instance is a number, then the instance is valid only if it has a
+     * value strictly greater than (not equal to) "exclusiveMinimum".
+     *
+     * @since 3.1
+     */
+    exclusiveMinimum?: number;
 }
 
 /**
@@ -281,24 +352,29 @@ export type SchemaNumberFormat = 'float' | 'double';
 /**
  * @see https://swagger.io/docs/specification/data-models/data-types/#number
  */
-export interface NumberSchema extends BaseNumber {
+interface BaseNumberSchema extends BaseNumber {
     type: 'number';
     /**
      * An optional format keyword serves as a hint for the tools to use a
-     * specific numeric type:
+     * specific numeric type.
      */
     format?: SchemaNumberFormat;
 }
 
-/**
- * @see https://swagger.io/docs/specification/data-models/data-types/#number
- */
-export type SchemaIntegerFormat = 'int32' | 'int64';
+export interface BaseNumberSchemaV30 extends BaseNumberSchema, BaseNumberV30 {}
+export interface BaseNumberSchemaV31 extends BaseNumberSchema, BaseNumberV31 {}
+
+export type NumberSchema = BaseNumberSchemaV30 | BaseNumberSchemaV31;
 
 /**
  * @see https://swagger.io/docs/specification/data-models/data-types/#number
  */
-export interface IntegerSchema extends BaseNumber {
+type SchemaIntegerFormat = 'int32' | 'int64';
+
+/**
+ * @see https://swagger.io/docs/specification/data-models/data-types/#number
+ */
+interface BaseIntegerSchema extends BaseNumber {
     type: 'integer';
     /**
      * An optional format keyword serves as a hint for the tools to use a
@@ -306,6 +382,11 @@ export interface IntegerSchema extends BaseNumber {
      */
     format?: SchemaIntegerFormat;
 }
+
+export interface BaseIntegerSchemaV30 extends BaseIntegerSchema, BaseNumberV30 {}
+export interface BaseIntegerSchemaV31 extends BaseIntegerSchema, BaseNumberV31 {}
+
+export type IntegerSchema = BaseIntegerSchemaV30 | BaseIntegerSchemaV31;
 
 /**
  * An optional format modifier serves as a hint at the contents and format of
@@ -341,6 +422,8 @@ export interface StringSchema extends TypedSchema {
     /**
      * An optional format modifier serves as a hint at the contents and format
      * of the string.
+     *
+     * @see https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#autoid-41
      */
     format?: SchemaStringFormat | string;
     /**
@@ -361,6 +444,8 @@ export interface StringSchema extends TypedSchema {
      *
      * A string instance is valid against this keyword if its length is greater
      * than, or equal to, the value of this keyword.
+     *
+     * Omitting this keyword has the same behavior as a value of 0.
      */
     minLength?: number;
     /**
@@ -370,10 +455,6 @@ export interface StringSchema extends TypedSchema {
      * than, or equal to, the value of this keyword.
      */
     maxLength?: number;
-    /**
-     * @see https://swagger.io/docs/specification/data-models/enums/
-     */
-    enum?: string[];
 }
 
 /**
@@ -445,8 +526,6 @@ export interface ArraySchema extends TypedSchema {
      * that array is less than or equal to the "maxContains" value.  The second
      * way is if the annotation result is a boolean "true" and the instance
      * array length is less than or equal to the "maxContains" value.
-     *
-     * @see https://github.com/swagger-api/swagger-core/wiki/Swagger-2.X---OpenAPI-3.1
      */
     maxContains?: number;
     /**
