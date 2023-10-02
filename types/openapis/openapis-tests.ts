@@ -1248,3 +1248,86 @@ const uspto: OpenAPI = {
         },
     },
 };
+
+/**
+ * @see https://github.com/OAI/OpenAPI-Specification/blob/main/examples/v3.1/non-oauth-scopes.json
+ */
+const nonOauthScopes: OpenAPI = {
+    openapi: '3.1.0',
+    info: {
+        title: 'Non-oAuth Scopes example',
+        version: '1.0.0',
+    },
+    paths: {
+        '/users': {
+            get: {
+                security: [
+                    {
+                        bearerAuth: ['read:users', 'public'],
+                    },
+                ],
+            },
+        },
+    },
+    components: {
+        securitySchemes: {
+            bearerAuth: {
+                type: 'http',
+                scheme: 'bearer',
+                bearerFormat: 'jwt',
+                description: 'note: non-oauth scopes are not defined at the securityScheme level',
+            },
+        },
+    },
+};
+
+/**
+ * @see https://github.com/OAI/OpenAPI-Specification/blob/main/examples/v3.1/webhook-example.json
+ */
+const webhookExample: OpenAPI = {
+    openapi: '3.1.0',
+    info: {
+        title: 'Webhook Example',
+        version: '1.0.0',
+    },
+    webhooks: {
+        newPet: {
+            post: {
+                requestBody: {
+                    description: 'Information about a new pet in the system',
+                    content: {
+                        'application/json': {
+                            schema: {
+                                $ref: '#/components/schemas/Pet',
+                            },
+                        },
+                    },
+                },
+                responses: {
+                    '200': {
+                        description: 'Return a 200 status to indicate that the data was received successfully',
+                    },
+                },
+            },
+        },
+    },
+    components: {
+        schemas: {
+            Pet: {
+                required: ['id', 'name'],
+                properties: {
+                    id: {
+                        type: 'integer',
+                        format: 'int64',
+                    },
+                    name: {
+                        type: 'string',
+                    },
+                    tag: {
+                        type: 'string',
+                    },
+                },
+            },
+        },
+    },
+};
