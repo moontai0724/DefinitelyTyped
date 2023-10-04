@@ -1151,7 +1151,7 @@ export interface ObjectSchema
      *
      * @default {}
      */
-    additionalProperties?: Schema;
+    additionalProperties?: Schema | boolean;
     /**
      * The value of "propertyNames" MUST be a valid JSON Schema.
      *
