@@ -10,14 +10,14 @@ export interface BaseLink extends Extendable {
      * name to be used, whereas the value can be a constant or an expression to
      * be evaluated and passed to the linked operation. The parameter name can
      * be qualified using the [parameter
-     * location](https://spec.openapis.org/oas/v3.0.3#parameterIn)
+     * location](https://spec.openapis.org/oas/v3.1.0#parameterIn)
      * `[{in}.]{name}` for operations that use the same parameter name in
      * different locations (e.g. [path.id](http://path.id/)).
      */
     parameters?: Record<string, any>;
     /**
      * A literal value or
-     * [{expression}](https://spec.openapis.org/oas/v3.0.3#runtimeExpression) to
+     * [{expression}](https://spec.openapis.org/oas/v3.1.0#runtimeExpression) to
      * use as a request body when calling the target operation.
      */
     requestBody?: any;
@@ -37,10 +37,11 @@ export interface ReferencedLink extends Omit<BaseLink, 'operationRef'> {
     /**
      * A relative or absolute URI reference to an OAS operation. This field is
      * mutually exclusive of the `operationId` field, and _MUST_ point to an
-     * [Operation Object](https://spec.openapis.org/oas/v3.0.3#operationObject).
+     * [Operation Object](https://spec.openapis.org/oas/v3.1.0#operationObject).
      * Relative `operationRef` values _MAY_ be used to locate an existing
-     * [Operation Object](https://spec.openapis.org/oas/v3.0.3#operationObject)
-     * in the OpenAPI definition.
+     * [Operation Object](https://spec.openapis.org/oas/v3.1.0#operationObject)
+     * in the OpenAPI definition. See the rules for resolving [Relative
+     * References](https://spec.openapis.org/oas/v3.1.0#relativeReferencesURI).
      */
     operationRef?: string;
 }
@@ -65,16 +66,10 @@ export interface IdSpecifiedLink extends Omit<BaseLink, 'operationId'> {
  * response.
  *
  * For computing links, and providing instructions to execute them, a [runtime
- * expression](https://spec.openapis.org/oas/v3.0.3#runtimeExpression) is used
+ * expression](https://spec.openapis.org/oas/v3.1.0#runtimeExpression) is used
  * for accessing values in an operation and using them as parameters while
  * invoking the linked operation.
  *
- * A linked operation _MUST_ be identified using either an `operationRef` or
- * `operationId`. In the case of an `operationId`, it _MUST_ be unique and
- * resolved in the scope of the OAS document. Because of the potential for name
- * clashes, the `operationRef` syntax is preferred for specifications with
- * external references.
- *
- * @see https://spec.openapis.org/oas/v3.0.3#link-object
+ * @see https://spec.openapis.org/oas/v3.1.0#link-object
  */
 export type Link = ReferencedLink | IdSpecifiedLink;

@@ -1,12 +1,9 @@
 import { Extendable, ExternalDocs } from './common';
 
 /**
- * Adds metadata to a single tag that is used by the [Operation
- * Object](https://spec.openapis.org/oas/v3.0.3#operationObject). It is not
- * mandatory to have a Tag Object per tag defined in the Operation Object
- * instances.
+ * Adds metadata to a single tag that is used by the [Operation Object](https://spec.openapis.org/oas/v3.1.0#operationObject). It is not mandatory to have a Tag Object per tag defined in the Operation Object instances.
  *
- * @see https://spec.openapis.org/oas/v3.0.3#tag-object
+ * @see https://spec.openapis.org/oas/v3.1.0#header-object
  */
 export interface Tag extends Extendable {
     /**
@@ -14,9 +11,7 @@ export interface Tag extends Extendable {
      */
     name: string;
     /**
-     * A short description for the tag. [CommonMark
-     * syntax](https://spec.commonmark.org/) _MAY_ be used for rich text
-     * representation.
+     * A description for the tag. [CommonMark syntax](https://spec.commonmark.org/) _MAY_ be used for rich text representation.
      */
     description?: string;
     /**

@@ -1,6 +1,6 @@
 import { Extendable, MayLowercase } from './common';
 
-export type SecurityType = MayLowercase<'apiKey' | 'http' | 'oauth2' | 'openIdConnect'>;
+export type SecurityType = MayLowercase<'apiKey' | 'http' | 'mutualTLS' | 'oauth2' | 'openIdConnect'>;
 
 export interface BaseSecurity extends Extendable {
     /**
@@ -8,16 +8,22 @@ export interface BaseSecurity extends Extendable {
      */
     type: SecurityType;
     /**
-     * A short description for security scheme. [CommonMark
+     * A description for security scheme. [CommonMark
      * syntax](https://spec.commonmark.org/) _MAY_ be used for rich text
      * representation.
      */
     description?: string;
+    name?: never;
+    in?: never;
+    scheme?: never;
+    bearerFormat?: never;
+    flows?: never;
+    openIdConnectUrl?: never;
 }
 
 export type ApiKeyLocation = 'query' | 'header' | 'cookie';
 
-export interface ApiKeySecurity extends BaseSecurity {
+export interface ApiKeySecurity extends Omit<BaseSecurity, 'name' | 'in'> {
     type: 'apiKey';
     /**
      * The name of the header, query or cookie parameter to be used.
@@ -29,10 +35,6 @@ export interface ApiKeySecurity extends BaseSecurity {
     in: ApiKeyLocation;
 }
 
-/**
- * Schemes defined in IANA Authentication Scheme Registry
- * @see https://www.iana.org/assignments/http-authschemes/http-authschemes.xhtml
- */
 export type HttpSecurityScheme = MayLowercase<
     | 'Basic'
     | 'Bearer'
@@ -47,19 +49,19 @@ export type HttpSecurityScheme = MayLowercase<
     | 'vapid'
 >;
 
-export interface HttpSecurity extends BaseSecurity {
+export interface HttpSecurity extends Omit<BaseSecurity, 'scheme'> {
     type: 'http';
     /**
      * The name of the HTTP Authorization scheme to be used in the Authorization
      * header as defined in
-     * \[[RFC7235](https://spec.openapis.org/oas/v3.0.3#bib-RFC7235)\]. The
+     * \[[RFC7235](https://spec.openapis.org/oas/v3.1.0#bib-RFC7235)\]. The
      * values used _SHOULD_ be registered in the [IANA Authentication Scheme
      * registry](https://www.iana.org/assignments/http-authschemes/http-authschemes.xhtml).
      */
     scheme: HttpSecurityScheme;
 }
 
-export interface HttpBearerSecurity extends HttpSecurity {
+export interface HttpBearerSecurity extends Omit<HttpSecurity, 'bearerFormat'> {
     type: 'http';
     scheme: MayLowercase<'Bearer'>;
     /**
@@ -70,15 +72,19 @@ export interface HttpBearerSecurity extends HttpSecurity {
     bearerFormat?: string;
 }
 
+export interface MutualTLSSecurity extends BaseSecurity {
+    type: MayLowercase<'mutualTLS'>;
+}
+
 /**
  * Configuration details for a supported OAuth Flow
  *
- * @see https://spec.openapis.org/oas/v3.0.3#oauth-flow-object
+ * @see https://spec.openapis.org/oas/v3.1.0#oauth-flow-object
  */
 export interface BasicOAuthFlow extends Extendable {
     /**
      * The URL to be used for obtaining refresh tokens. This _MUST_ be in the
-     * form of a URL.
+     * form of a URL. The OAuth2 standard requires the use of TLS.
      */
     refreshUrl?: string;
     /**
@@ -91,7 +97,7 @@ export interface BasicOAuthFlow extends Extendable {
 interface WithAuthorizationUrl {
     /**
      * The authorization URL to be used for this flow. This _MUST_ be in the
-     * form of a URL.
+     * form of a URL. The OAuth2 standard requires the use of TLS.
      */
     authorizationUrl: string;
 }
@@ -99,7 +105,7 @@ interface WithAuthorizationUrl {
 interface WithTokenUrl {
     /**
      * The token URL to be used for this flow. This _MUST_ be in the form of a
-     * URL.
+     * URL. The OAuth2 standard requires the use of TLS.
      */
     tokenUrl: string;
 }
@@ -112,7 +118,7 @@ export interface OAuthAuthorizationCodeFlow extends BasicOAuthFlow, WithAuthoriz
 /**
  * Allows configuration of the supported OAuth Flows.
  *
- * @see https://spec.openapis.org/oas/v3.0.3#oauth-flows-object
+ * @see https://spec.openapis.org/oas/v3.1.0#oauth-flows-object
  */
 export interface OAuthFlows extends Extendable {
     /**
@@ -135,7 +141,7 @@ export interface OAuthFlows extends Extendable {
     authorizationCode?: OAuthAuthorizationCodeFlow;
 }
 
-export interface OAuthSecurity extends BaseSecurity {
+export interface OAuthSecurity extends Omit<BaseSecurity, 'flows'> {
     type: 'oauth2';
     /**
      * An object containing configuration information for the flow types
@@ -144,35 +150,48 @@ export interface OAuthSecurity extends BaseSecurity {
     flows: OAuthFlows;
 }
 
-export interface OpenIdConnectSecurity extends BaseSecurity {
+export interface OpenIdConnectSecurity extends Omit<BaseSecurity, 'openIdConnectUrl'> {
     type: MayLowercase<'openIdConnect'>;
     /**
      * OpenId Connect URL to discover OAuth2 configuration values. This _MUST_
-     * be in the form of a URL.
+     * be in the form of a URL. The OpenID Connect standard requires the use of
+     * TLS.
      */
     openIdConnectUrl: string;
 }
 
 /**
- * Defines a security scheme that can be used by the operations. Supported
- * schemes are HTTP authentication, an API key (either as a header, a cookie
- * parameter or as a query parameter), OAuth2’s common flows (implicit,
- * password, client credentials and authorization code) as defined in
- * \[[RFC6749](https://spec.openapis.org/oas/v3.0.3#bib-RFC6749)\], and [OpenID
- * Connect
- * Discovery](https://tools.ietf.org/html/draft-ietf-oauth-discovery-06).
+ * Defines a security scheme that can be used by the operations.
  *
- * @see https://spec.openapis.org/oas/v3.0.3#security-scheme-object
+ * Supported schemes are HTTP authentication, an API key (either as a header, a
+ * cookie parameter or as a query parameter), mutual TLS (use of a client
+ * certificate), OAuth2’s common flows (implicit, password, client credentials
+ * and authorization code) as defined in
+ * \[[RFC6749](https://spec.openapis.org/oas/v3.1.0#bib-RFC6749)\], and [OpenID
+ * Connect
+ * Discovery](https://tools.ietf.org/html/draft-ietf-oauth-discovery-06). Please
+ * note that as of 2020, the implicit flow is about to be deprecated by [OAuth
+ * 2.0 Security Best Current
+ * Practice](https://tools.ietf.org/html/draft-ietf-oauth-security-topics).
+ * Recommended for most use case is Authorization Code Grant flow with PKCE.
+ *
+ * @see https://spec.openapis.org/oas/v3.1.0#security-scheme-object
  */
-export type SecurityScheme = ApiKeySecurity | HttpBearerSecurity | HttpSecurity | OAuthSecurity | OpenIdConnectSecurity;
+export type SecurityScheme =
+    | ApiKeySecurity
+    | HttpBearerSecurity
+    | HttpSecurity
+    | MutualTLSSecurity
+    | OAuthSecurity
+    | OpenIdConnectSecurity;
 
 /**
  * Lists the required security schemes to execute this operation. The name used
  * for each property _MUST_ correspond to a security scheme declared in the
  * [Security
- * Schemes](https://spec.openapis.org/oas/v3.0.3#componentsSecuritySchemes)
+ * Schemes](https://spec.openapis.org/oas/v3.1.0#componentsSecuritySchemes)
  * under the [Components
- * Object](https://spec.openapis.org/oas/v3.0.3#componentsObject).
+ * Object](https://spec.openapis.org/oas/v3.1.0#componentsObject).
  *
  * Security Requirement Objects that contain multiple schemes require that all
  * schemes _MUST_ be satisfied for a request to be authorized. This enables
@@ -180,24 +199,26 @@ export type SecurityScheme = ApiKeySecurity | HttpBearerSecurity | HttpSecurity 
  * required to convey security information.
  *
  * When a list of Security Requirement Objects is defined on the [OpenAPI
- * Object](https://spec.openapis.org/oas/v3.0.3#oasObject) or [Operation
- * Object](https://spec.openapis.org/oas/v3.0.3#operationObject), only one of
+ * Object](https://spec.openapis.org/oas/v3.1.0#oasObject) or [Operation
+ * Object](https://spec.openapis.org/oas/v3.1.0#operationObject), only one of
  * the Security Requirement Objects in the list needs to be satisfied to
  * authorize the request.
  *
- * @see https://spec.openapis.org/oas/v3.0.3#security-requirement-object
+ * @see https://spec.openapis.org/oas/v3.1.0#security-requirement-object
  */
 export interface SecurityRequirement {
     /**
      * Each name _MUST_ correspond to a security scheme which is declared in the
      * [Security
-     * Schemes](https://spec.openapis.org/oas/v3.0.3#componentsSecuritySchemes)
+     * Schemes](https://spec.openapis.org/oas/v3.1.0#componentsSecuritySchemes)
      * under the [Components
-     * Object](https://spec.openapis.org/oas/v3.0.3#componentsObject). If the
+     * Object](https://spec.openapis.org/oas/v3.1.0#componentsObject). If the
      * security scheme is of type `"oauth2"` or `"openIdConnect"`, then the
      * value is a list of scope names required for the execution, and the list
      * _MAY_ be empty if authorization does not require a specified scope. For
-     * other security scheme types, the array _MUST_ be empty.
+     * other security scheme types, the array _MAY_ contain a list of role names
+     * which are required for the execution, but are not otherwise defined or
+     * exchanged in-band.
      */
     [securitySchemeName: string]: string[];
 }

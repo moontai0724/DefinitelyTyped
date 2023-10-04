@@ -8,24 +8,22 @@ import { Schema } from './schema';
 interface BaseEncoding extends Extendable {
     /**
      * The Content-Type for encoding a specific property. Default value depends
-     * on the property type: for `string` with `format` being `binary` –
-     * `application/octet-stream`; for other primitive types – `text/plain`; for
-     * `object` - `application/json`; for `array` – the default is defined based
-     * on the inner type. The value can be a specific media type (e.g.
-     * `application/json`), a wildcard media type (e.g. `image/*`), or a
-     * comma-separated list of the two types.
+     * on the property type: for `object` - `application/json`; for `array` –
+     * the default is defined based on the inner type; for all other cases the
+     * default is `application/octet-stream`. The value can be a specific media
+     * type (e.g. `application/json`), a wildcard media type (e.g. `image/*`),
+     * or a comma-separated list of the two types.
      */
     contentType?: string;
-}
-
-export interface AnyEncoding extends BaseEncoding {
     headers?: never;
     style?: never;
     explode?: never;
     allowReserved?: never;
 }
 
-export interface MultiPartFormEncoding extends BaseEncoding {
+export interface AnyEncoding extends BaseEncoding {}
+
+export interface MultiPartFormEncoding extends Omit<BaseEncoding, 'headers'> {
     /**
      * A map allowing additional information to be provided as headers, for
      * example `Content-Disposition`. `Content-Type` is described separately and
@@ -33,39 +31,48 @@ export interface MultiPartFormEncoding extends BaseEncoding {
      * the request body media type is not a `multipart`.
      */
     headers?: Record<string, Header | Reference>;
-    style?: never;
-    explode?: never;
-    allowReserved?: never;
 }
 
-export interface ApplicationXWwwFormUrlEncodedEncoding extends BaseEncoding {
-    headers?: never;
+export interface ApplicationXWwwFormUrlEncodedEncoding
+    extends Omit<BaseEncoding, 'style' | 'explode' | 'allowReserved'> {
     /**
      * Describes how a specific property value will be serialized depending on
      * its type. See [Parameter
-     * Object](https://spec.openapis.org/oas/v3.0.3#parameterObject) for details
-     * on the [`style`](https://spec.openapis.org/oas/v3.0.3#parameterStyle)
+     * Object](https://spec.openapis.org/oas/v3.1.0#parameterObject) for details
+     * on the [`style`](https://spec.openapis.org/oas/v3.1.0#parameterStyle)
      * property. The behavior follows the same values as `query` parameters,
      * including default values. This property _SHALL_ be ignored if the request
-     * body media type is not `application/x-www-form-urlencoded`.
+     * body media type is not `application/x-www-form-urlencoded` or
+     * `multipart/form-data`. If a value is explicitly defined, then the value
+     * of
+     * [`contentType`](https://spec.openapis.org/oas/v3.1.0#encodingContentType)
+     * (implicit or explicit) _SHALL_ be ignored.
      */
     style?: QueryParameterStyle;
     /**
      * When this is true, property values of type `array` or `object` generate
      * separate parameters for each value of the array, or key-value-pair of the
      * map. For other types of properties this property has no effect. When
-     * [`style`](https://spec.openapis.org/oas/v3.0.3#encodingStyle) is `form`,
+     * [`style`](https://spec.openapis.org/oas/v3.1.0#encodingStyle) is `form`,
      * the default value is `true`. For all other styles, the default value is
      * `false`. This property _SHALL_ be ignored if the request body media type
-     * is not `application/x-www-form-urlencoded`.
+     * is not `application/x-www-form-urlencoded` or `multipart/form-data`. If a
+     * value is explicitly defined, then the value of
+     * [`contentType`](https://spec.openapis.org/oas/v3.1.0#encodingContentType)
+     * (implicit or explicit) _SHALL_ be ignored.
      */
     explode?: boolean;
     /**
-     * Determines whether the parameter value SHOULD allow reserved characters,
-     * as defined by [RFC3986] :/?#[]@!$&'()*+,;= to be included without
-     * percent-encoding. The default value is false. This property SHALL be
-     * ignored if the request body media type is not
-     * application/x-www-form-urlencoded.
+     * Determines whether the parameter value _SHOULD_ allow reserved
+     * characters, as defined by
+     * \[[RFC3986](https://spec.openapis.org/oas/v3.1.0#bib-RFC3986)\]
+     * `:/?#[]@!$&'()*+,;=` to be included without percent-encoding. The default
+     * value is `false`. This property _SHALL_ be ignored if the request body
+     * media type is not `application/x-www-form-urlencoded` or
+     * `multipart/form-data`. If a value is explicitly defined, then the value
+     * of
+     * [`contentType`](https://spec.openapis.org/oas/v3.1.0#encodingContentType)
+     * (implicit or explicit) _SHALL_ be ignored.
      */
     allowReserved?: boolean;
 }
@@ -73,7 +80,7 @@ export interface ApplicationXWwwFormUrlEncodedEncoding extends BaseEncoding {
 /**
  * A single encoding definition applied to a single schema property.
  *
- * @see https://spec.openapis.org/oas/v3.0.3#encoding-object
+ * @see https://spec.openapis.org/oas/v3.1.0#encoding-object
  */
 export type Encoding = AnyEncoding | MultiPartFormEncoding | ApplicationXWwwFormUrlEncodedEncoding;
 
@@ -81,7 +88,9 @@ interface BaseMediaType extends Extendable {
     /**
      * The schema defining the content of the request, response, or parameter.
      */
-    schema?: Schema | Reference;
+    schema?: Schema;
+    example?: never;
+    examples?: never;
     /**
      * A map between a property name and its encoding information. The key,
      * being the property name, _MUST_ exist in the schema as a property. The
@@ -89,8 +98,6 @@ interface BaseMediaType extends Extendable {
      * media type is `multipart` or `application/x-www-form-urlencoded`.
      */
     encoding?: Record<string, Encoding>;
-    example?: never;
-    examples?: never;
 }
 
 interface MediaTypeWithExample extends Omit<BaseMediaType, 'example'> {
@@ -119,22 +126,11 @@ interface MediaTypeWithExamples extends Omit<BaseMediaType, 'examples'> {
  * Each Media Type Object provides schema and examples for the media type
  * identified by its key.
  *
- * @see https://spec.openapis.org/oas/v3.0.3#media-type-object
- * @see https://spec.openapis.org/oas/v3.0.3#considerations-for-file-uploads
- * @see
- * https://spec.openapis.org/oas/v3.0.3#support-for-x-www-form-urlencoded-request-bodies
- * @see
- * https://spec.openapis.org/oas/v3.0.3#special-considerations-for-multipart-content
+ * @see https://spec.openapis.org/oas/v3.1.0#media-type-object
  */
 export type MediaType = MediaTypeWithExample | MediaTypeWithExamples;
 
 export interface MediaTypeMap {
-    /**
-     * A map containing the representations for the parameter. The key is the
-     * media type and the value describes it. The map MUST only contain one
-     * entry.
-     * @see https://www.iana.org/assignments/media-types/media-types.xhtml
-     */
     [mediaType: string]: MediaType;
 }
 

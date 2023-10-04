@@ -4,7 +4,7 @@ import { MediaTypeMap } from './media';
 /**
  * Describes a single request body.
  *
- * @see https://spec.openapis.org/oas/v3.0.3#request-body-object
+ * @see https://spec.openapis.org/oas/v3.1.0#request-body-object
  */
 export interface RequestBody extends Extendable {
     /**

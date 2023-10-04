@@ -4,22 +4,22 @@ import { Extendable } from './common';
  * An object representing a Server Variable for server URL template
  * substitution.
  *
- * @see https://spec.openapis.org/oas/v3.0.3#server-variable-object
+ * @see https://spec.openapis.org/oas/v3.1.0#server-variable-object
  */
 export interface ServerVariable extends Extendable {
     /**
      * An enumeration of string values to be used if the substitution options
-     * are from a limited set. The array _SHOULD NOT_ be empty.
+     * are from a limited set. The array _MUST NOT_ be empty.
      */
     enum?: string[];
     /**
      * The default value to use for substitution, which _SHALL_ be sent if an
      * alternate value is _not_ supplied. Note this behavior is different than
-     * the [Schema Object’s](https://spec.openapis.org/oas/v3.0.3#schemaObject)
+     * the [Schema Object’s](https://spec.openapis.org/oas/v3.1.0#schemaObject)
      * treatment of default values, because in those cases parameter values are
      * optional. If the
-     * [`enum`](https://spec.openapis.org/oas/v3.0.3#serverVariableEnum) is
-     * defined, the value _SHOULD_ exist in the enum’s values.
+     * [`enum`](https://spec.openapis.org/oas/v3.1.0#serverVariableEnum) is
+     * defined, the value _MUST_ exist in the enum’s values.
      */
     default: string;
     /**
@@ -33,7 +33,7 @@ export interface ServerVariable extends Extendable {
 /**
  * An object representing a Server.
  *
- * @see https://spec.openapis.org/oas/v3.0.3#server-object
+ * @see https://spec.openapis.org/oas/v3.1.0#server-object
  */
 export interface Server extends Extendable {
     /**

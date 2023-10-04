@@ -27,20 +27,16 @@ export interface InlineExample extends Omit<BaseExample, 'value'> {
 
 export interface ExternalExample extends Omit<BaseExample, 'externalValue'> {
     /**
-     * A URL that points to the literal example. This provides the capability to
+     * A URI that points to the literal example. This provides the capability to
      * reference examples that cannot easily be included in JSON or YAML
      * documents. The `value` field and `externalValue` field are mutually
-     * exclusive.
+     * exclusive. See the rules for resolving [Relative
+     * References](https://spec.openapis.org/oas/v3.1.0#relativeReferencesURI).
      */
     externalValue?: string;
 }
 
 /**
- * In all cases, the example value is expected to be compatible with the type
- * schema of its associated value. Tooling implementations _MAY_ choose to
- * validate compatibility automatically, and reject the example value(s) if
- * incompatible.
- *
- * @see https://spec.openapis.org/oas/v3.0.3#example-object
+ * @see https://spec.openapis.org/oas/v3.1.0#example-object
  */
 export type Example = InlineExample | ExternalExample;
