@@ -114,7 +114,7 @@ export interface BaseSchema {
      * Values for this property are defined elsewhere in this and other
      * documents, and by other parties.
      */
-    $schema?: string[];
+    $schema?: string;
     /**
      * The "$vocabulary" keyword is used in meta-schemas to identify the
      * vocabularies available for use in schemas described by that meta- schema.
